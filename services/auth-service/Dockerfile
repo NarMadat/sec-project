@@ -1,17 +1,26 @@
 FROM node:18-alpine
 
+# Install pnpm
+RUN npm install -g pnpm
+
 WORKDIR /app
 
-COPY package*.json ./
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
 COPY prisma ./prisma/
 
-RUN npm install
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
+# Generate Prisma client
+RUN pnpm prisma generate
+
+# Copy source code
 COPY . .
 
-RUN npx prisma generate
-RUN npm run build
+# Build application
+RUN pnpm run build
 
 EXPOSE 3001
 
-CMD ["npm", "run", "start:prod"]
+CMD ["pnpm", "run", "start:prod"]

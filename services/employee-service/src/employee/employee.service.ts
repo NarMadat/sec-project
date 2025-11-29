@@ -1,14 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateEmployeeDto, UpdateEmployeeDto } from './dto';
+import { CreateEmployeeDto, UpdateEmployeeDto, EmployeeStatus } from './dto';
+import { Prisma } from '../../prisma/generated';
 
 @Injectable()
 export class EmployeeService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createEmployeeDto: CreateEmployeeDto) {
+    const { certifications = [], ...employeeData } = createEmployeeDto;
+
     const employee = await this.prisma.employee.create({
-      data: createEmployeeDto,
+      data: {
+        ...employeeData,
+        status: employeeData.status as EmployeeStatus,
+        certifications: certifications.length
+          ? {
+              create: certifications.map((cert) => ({
+                name: cert.name,
+                issueDate: new Date(cert.issueDate),
+                expiryDate: new Date(cert.expiryDate),
+                issuingAuthority: cert.issuingAuthority,
+              })),
+            }
+          : undefined,
+      } satisfies Prisma.EmployeeCreateInput,
       include: {
         certifications: true,
       },
@@ -25,7 +41,9 @@ export class EmployeeService {
     const { page = 1, limit = 10, status } = params;
     const skip = (page - 1) * limit;
 
-    const where = status ? { status } : {};
+    const where: Prisma.EmployeeWhereInput = status
+      ? { status: status as EmployeeStatus }
+      : {};
 
     const [employees, total] = await Promise.all([
       this.prisma.employee.findMany({
@@ -81,9 +99,27 @@ export class EmployeeService {
       throw new NotFoundException('Employee not found');
     }
 
+    const { certifications, ...updateData } = updateEmployeeDto;
+
     const updatedEmployee = await this.prisma.employee.update({
       where: { id },
-      data: updateEmployeeDto,
+      data: {
+        ...updateData,
+        ...(updateData.status ? { status: updateData.status as EmployeeStatus } : {}),
+        ...(certifications
+          ? {
+              certifications: {
+                deleteMany: { employeeId: id },
+                create: certifications.map((cert) => ({
+                  name: cert.name,
+                  issueDate: new Date(cert.issueDate),
+                  expiryDate: new Date(cert.expiryDate),
+                  issuingAuthority: cert.issuingAuthority,
+                })),
+              },
+            }
+          : {}),
+      } satisfies Prisma.EmployeeUpdateInput,
       include: {
         certifications: true,
       },
