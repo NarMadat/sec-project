@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id              String            @id @default(uuid())
+  companyName     String
+  contactEmail    String
+  contactPhone    String
+  address         String?
+  contractDetails String?
+  serviceLevel    String?
+  objects         ProtectedObject[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("clients")
+}
+
+model ProtectedObject {
+  id               String             @id @default(uuid())
+  clientId         String
+  name             String
+  address          String
+  latitude         Float
+  longitude        Float
+  securityLevel    SecurityLevel
+  protocols        String[]
+  emergencyContacts EmergencyContact[]
+  client           Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@map("protected_objects")
+}
+
+model EmergencyContact {
+  id       String          @id @default(uuid())
+  objectId String
+  name     String
+  phone    String
+  role     String
+  object   ProtectedObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@map("emergency_contacts")
+}
+
+enum SecurityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
