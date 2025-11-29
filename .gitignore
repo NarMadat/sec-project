@@ -1,0 +1,33 @@
+# Node / pnpm
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+*.log
+
+# Environment files
+.env
+*.env.local
+
+# Prisma
+prisma/generated/
+**/prisma/generated/
+*.db
+
+# VS Code / IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Docker
+*.pid
+*.sock
+
+# Coverage / testing
+coverage/
+.nyc_output/
+
+# Misc
+.tmp/
+.swp
