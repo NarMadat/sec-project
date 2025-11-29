@@ -1,4 +1,3 @@
--- Create databases for each microservice
 CREATE DATABASE auth_db;
 CREATE DATABASE employee_db;
 CREATE DATABASE object_db;
